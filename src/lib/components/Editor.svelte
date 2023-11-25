@@ -6,12 +6,30 @@
 
 	let monaco: typeof import('monaco-editor');
 	let editor: editor.IStandaloneCodeEditor;
+	let worker: Worker;
+
 	let divContainer: HTMLDivElement;
+
+	export function executeCode() {
+		const code = editor.getValue();
+		fetch('http://localhost:5173/api/compile', {
+			method: 'POST',
+			body: JSON.stringify({ code }),
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		})
+			.then((res) => res.json())
+			.then(console.log)
+			.catch(console.error);
+	}
 
 	onMount(async () => {
 		monaco = await import('monaco-editor');
 
-		// Load the language services
+		//@ts-ignore
+		monaco.editor.defineTheme('vs-dark-plus', vsDarkPlus);
+
 		await Promise.all([
 			import('monaco-editor/esm/vs/language/typescript/ts.worker?worker'),
 			import('monaco-editor/esm/vs/editor/editor.worker?worker')
@@ -25,11 +43,10 @@
 				}
 			};
 		});
-
 		editor = monaco.editor.create(divContainer, {
 			value: "function hello() {\n\talert('Hello world!');\n}",
 			language: 'javascript',
-			theme: 'vs-dark'
+			theme: 'vs-dark-plus'
 		});
 	});
 
@@ -39,6 +56,7 @@
 </script>
 
 <div id="container" bind:this={divContainer}></div>
+<button on:click={executeCode}>Execute code</button>
 
 <style>
 	#container {
