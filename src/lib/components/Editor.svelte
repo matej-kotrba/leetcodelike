@@ -3,25 +3,48 @@
 	import type { editor } from 'monaco-editor';
 	import 'monaco-editor/min/vs/editor/editor.main.css';
 	import vsDarkPlus from '$lib/edtior/darkPlus.json';
+	import Sandbox from '@nyariv/sandboxjs';
 
 	let monaco: typeof import('monaco-editor');
 	let editor: editor.IStandaloneCodeEditor;
-	let worker: Worker;
 
 	let divContainer: HTMLDivElement;
 
-	export function executeCode() {
+	export async function executeCode() {
 		const code = editor.getValue();
-		fetch('http://localhost:5173/api/compile', {
-			method: 'POST',
-			body: JSON.stringify({ code }),
-			headers: {
-				'Content-Type': 'application/json'
-			}
-		})
-			.then((res) => res.json())
-			.then(console.log)
-			.catch(console.error);
+
+		const originalConsoleLog = console.log;
+		let codeConsoleLogs: string[] = [];
+
+		console.log = (...args: any[]) => {
+			codeConsoleLogs.push(args.join(' '));
+		};
+
+		const sandbox = new Sandbox();
+		const exec = sandbox.compile(code);
+		const result = exec().run();
+
+		console.log = originalConsoleLog;
+		console.log(codeConsoleLogs);
+
+		console.log(result);
+
+		// // Send the code to the worker
+		// worker.postMessage(code);
+		// const result = new Function(code)();
+		// console.log(result);
+
+		// Working example of server side code compliation
+		// fetch('http://localhost:5173/api/compile', {
+		// 	method: 'POST',
+		// 	body: JSON.stringify({ code }),
+		// 	headers: {
+		// 		'Content-Type': 'application/json'
+		// 	}
+		// })
+		// 	.then((res) => res.json())
+		// 	.then(console.log)
+		// 	.catch(console.error);
 	}
 
 	onMount(async () => {
@@ -44,7 +67,7 @@
 			};
 		});
 		editor = monaco.editor.create(divContainer, {
-			value: "function hello() {\n\talert('Hello world!');\n}",
+			value: "function hello() {\n\tconsole.log('aaaaaa')\n\treturn 'Hello world!';\n}\n\nhello()",
 			language: 'javascript',
 			theme: 'vs-dark-plus'
 		});

@@ -24,7 +24,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"isolated-vm": "^4.6.0",
+		"@nyariv/sandboxjs": "^0.8.23",
 		"monaco-editor": "^0.44.0"
 	}
 }
